@@ -1247,22 +1247,24 @@ footer{
     <div class="reveal d1">
       <div class="book-form">
         <div id="formInner">
-          <div class="form-row2" style="margin-bottom:0">
-            <div>
-              <label class="flabel">First name</label>
-              <input class="finput" type="text" id="fn" placeholder="Jake">
+          <form onsubmit="handleSubmit(event)">
+            <div class="form-row2" style="margin-bottom:0">
+              <div>
+                <label class="flabel">First name</label>
+                <input class="finput" type="text" name="first-name" placeholder="Jake" required>
+              </div>
+              <div>
+                <label class="flabel">Agency name</label>
+                <input class="finput" type="text" name="agency-name" placeholder="GrowthLab">
+              </div>
             </div>
-            <div>
-              <label class="flabel">Agency name</label>
-              <input class="finput" type="text" id="an" placeholder="GrowthLab">
-            </div>
-          </div>
-          <label class="flabel">Work email</label>
-          <input class="finput" type="email" id="fe" placeholder="you@youragency.com">
-          <label class="flabel">Biggest manual pain right now</label>
-          <input class="finput" type="text" id="fp" placeholder="Weekly reports take 6 hours...">
-          <button class="fsubmit" onclick="submitForm()">Send me a calendar link</button>
-          <div class="fnote">Free call. No pitch. Reply within 24 hours.</div>
+            <label class="flabel">Work email</label>
+            <input class="finput" type="email" name="email" placeholder="you@youragency.com" required>
+            <label class="flabel">Biggest manual pain right now</label>
+            <input class="finput" type="text" name="pain-point" placeholder="Weekly reports take 6 hours...">
+            <button class="fsubmit" type="submit">Send me a calendar link</button>
+            <div class="fnote">Free call. No pitch. Reply within 24 hours.</div>
+          </form>
         </div>
         <div class="success-box" id="successBox">
           <span class="big">YOU'RE IN.</span>
@@ -1459,23 +1461,27 @@ async function handleSubmit(e) {
   e.preventDefault();
   const form = e.target;
   const btn = form.querySelector('.fsubmit');
+  const originalText = btn.textContent;
   btn.textContent = 'Sending...';
   btn.disabled = true;
   try {
+    const data = new FormData(form);
     const res = await fetch('https://formspree.io/f/mzdlzywn', {
       method: 'POST',
-      body: new FormData(form),
+      body: data,
       headers: { 'Accept': 'application/json' }
     });
-    if (res.ok) {
+    const json = await res.json();
+    if (res.ok && json.ok) {
       document.getElementById('formInner').style.display = 'none';
       document.getElementById('successBox').style.display = 'block';
     } else {
-      btn.textContent = 'Something went wrong. Try again.';
+      const errMsg = json.errors ? json.errors.map(e => e.message).join(', ') : 'Something went wrong.';
+      btn.textContent = errMsg;
       btn.disabled = false;
     }
   } catch(err) {
-    btn.textContent = 'Something went wrong. Try again.';
+    btn.textContent = 'Connection error. Try again.';
     btn.disabled = false;
   }
 }
